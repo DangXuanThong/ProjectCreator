@@ -1,0 +1,22 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+tab_width = 4
+
+[{*.kt,*.kts}]
+indent_size = 4
+ktlint_code_style = android_studio
+ktlint_function_naming_ignore_when_annotated_with = Composable
+ktlint_standard_function-signature = disabled
+ktlint_standard_multiline-if-else = disabled
+
+[App.kt]
+ktlint_compose_modifier-missing-check = disabled
+
+[main.kt]
+ktlint_standard_filename = disabled
+
+[*.toml]
+ij_toml_keep_indents_on_empty_lines = false
