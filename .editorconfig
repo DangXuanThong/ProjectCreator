@@ -12,11 +12,5 @@ ktlint_function_naming_ignore_when_annotated_with = Composable
 ktlint_standard_function-signature = disabled
 ktlint_standard_multiline-if-else = disabled
 
-[App.kt]
-ktlint_compose_modifier-missing-check = disabled
-
-[main.kt]
-ktlint_standard_filename = disabled
-
 [*.toml]
 ij_toml_keep_indents_on_empty_lines = false
