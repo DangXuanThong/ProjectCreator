@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.composeHotReload)
 }
 
@@ -21,10 +22,22 @@ kotlin {
 
             implementation(libs.lifecycle.viewmodel)
             implementation(libs.lifecycle.runtime)
+
+            implementation(project.dependencies.platform(libs.ktor.bom))
+            implementation(libs.ktor.core)
+            implementation(libs.ktor.cio)
+            implementation(libs.ktor.logging)
+            implementation(libs.ktor.content.negotiation)
+            implementation(libs.ktor.serialization.json)
+            implementation(libs.ktor.serialization.xml)
+            implementation(libs.ktor.auth)
+
+            implementation(libs.dotenv.kotlin)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation("ch.qos.logback:logback-classic:1.5.21")
         }
 
         commonTest.dependencies {
