@@ -18,14 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AndroidProjectScreen(
     modifier: Modifier = Modifier,
-    vm: AndroidProjectViewModel = viewModel()
+    vm: AndroidProjectViewModel = koinViewModel()
 ) {
     val filePicker = rememberDirectoryPickerLauncher {
         it?.let { dir ->

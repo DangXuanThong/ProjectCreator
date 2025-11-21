@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.ksp)
 }
 
 kotlin {
@@ -35,6 +36,15 @@ kotlin {
             implementation(libs.filekit.core)
             implementation(libs.filekit.compose)
             implementation(libs.dotenv.kotlin)
+
+            implementation(project.dependencies.platform(libs.koin.bom))
+            implementation(libs.koin.core)
+//                implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
+            api(libs.koin.annotations)
+        }
+        commonMain.configure {
+            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -46,6 +56,10 @@ kotlin {
             implementation(libs.kotlin.test)
         }
     }
+}
+
+dependencies {
+    add("kspJvm", libs.koin.compiler)
 }
 
 compose.desktop {
@@ -62,4 +76,8 @@ compose.desktop {
             }
         }
     }
+}
+
+ksp {
+    arg("KOIN_CONFIG_CHECK", "true")
 }

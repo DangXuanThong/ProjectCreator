@@ -14,7 +14,9 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.koin.core.annotation.Single
 
+@Single
 class ProjectApiService(private val client: HttpClient) {
     suspend fun downloadProject(
         path: File,

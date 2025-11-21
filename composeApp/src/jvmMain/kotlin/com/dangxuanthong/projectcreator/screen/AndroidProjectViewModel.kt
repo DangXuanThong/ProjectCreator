@@ -5,19 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dangxuanthong.projectcreator.repository.ProjectApiService
 import com.dangxuanthong.projectcreator.repository.ProjectRepository
-import io.github.cdimascio.dotenv.dotenv
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerTokens
-import io.ktor.client.plugins.auth.providers.bearer
-import io.ktor.client.plugins.logging.Logging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.android.annotation.KoinViewModel
 
-class AndroidProjectViewModel : ViewModel() {
+@KoinViewModel
+class AndroidProjectViewModel(private val projectRepository: ProjectRepository) : ViewModel() {
     var projectName by mutableStateOf("")
         private set
 
@@ -36,13 +30,8 @@ class AndroidProjectViewModel : ViewModel() {
     }
 
     fun onCreateProject() = viewModelScope.launch(Dispatchers.IO) {
-        val client = HttpClient(CIO) {
-            install(Logging)
-            install(Auth) {
-                bearer { loadTokens { BearerTokens(dotenv { directory = ".." }["GH_PAT"], null) } }
-            }
-        }
-        val repo = ProjectRepository(ProjectApiService(client))
-        repo.saveProject("$projectPath/${projectName.takeIf { it.isNotBlank() } ?: "My App"}")
+        projectRepository.saveProject(
+            "$projectPath/${projectName.takeIf(String::isNotBlank) ?: "My App"}"
+        )
     }
 }
