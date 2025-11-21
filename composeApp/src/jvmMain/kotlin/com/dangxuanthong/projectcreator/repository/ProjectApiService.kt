@@ -27,8 +27,8 @@ class ProjectApiService(private val client: HttpClient) {
             headers {
                 append("Accept", "application/vnd.github+json")
             }
-            onDownload { current, total ->
-                progress?.invoke(total?.let { current.toFloat() / it })
+            if (progress != null) onDownload { current, total ->
+                progress.invoke(total?.let { current.toFloat() / it })
             }
         }.execute { response ->
             // Get a ByteReadChannel, streaming as it's downloaded
@@ -37,25 +37,27 @@ class ProjectApiService(private val client: HttpClient) {
             val inputStream = channel.toInputStream()
 
             ZipInputStream(BufferedInputStream(inputStream)).use { zip ->
-                val entry: ZipEntry? = zip.nextEntry
-                val buffer = ByteArray(8 * 1024)
+                var entry: ZipEntry? = zip.nextEntry
 
                 while (entry != null) {
-                    val outFile = File(path, entry.name)
-                    if (entry.isDirectory) outFile.mkdirs()
-                    else {
-//                    outFile.parentFile?.mkdirs()
-                        FileOutputStream(outFile).use { fos ->
-                            var len: Int
-                            while (true) {
-                                len = zip.read(buffer)
-                                if (len <= 0) break
-                                fos.write(buffer, 0, len)
-                            }
+                    val rawName = entry.name
+                    // Skip the outer directory: remove the first path component
+                    val normalizedName = rawName.substringAfter('/', rawName)
+
+                    // If normalizedName is empty (e.g. the root folder itself), skip it
+                    if (normalizedName.isNotEmpty()) {
+                        val outFile = File(path, normalizedName)
+
+                        if (entry.isDirectory) outFile.mkdirs()
+                        else {
+                            outFile.parentFile?.mkdirs()
+                            FileOutputStream(outFile).use { fos -> zip.copyTo(fos) }
                         }
                     }
+
+                    zip.closeEntry()
+                    entry = zip.nextEntry
                 }
-                zip.closeEntry()
             }
         }
     }

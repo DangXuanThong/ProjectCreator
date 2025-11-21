@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -62,6 +63,16 @@ fun AndroidProjectScreen(
             ) {
                 Text("Browse")
             }
+        }
+
+        Button(
+            onClick = { vm.onCreateProject() },
+            modifier = Modifier.align(
+                Alignment.End
+            ).padding(top = 16.dp).pointerHoverIcon(PointerIcon.Hand),
+            enabled = vm.isCreateProjectEnable
+        ) {
+            Text("Create")
         }
     }
 }
