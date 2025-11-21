@@ -1,4 +1,4 @@
-package com.dangxuanthong.projectcreator.screen
+package com.dangxuanthong.projectcreator.ui.screen
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

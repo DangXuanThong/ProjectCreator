@@ -20,8 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
-import com.dangxuanthong.projectcreator.screen.AndroidProjectScreen
-import com.dangxuanthong.projectcreator.screen.MultiplatformProjectScreen
+import com.dangxuanthong.projectcreator.ui.screen.AndroidProjectScreen
+import com.dangxuanthong.projectcreator.ui.screen.MultiplatformProjectScreen
 import com.dangxuanthong.projectcreator.ui.theme.ProjectCreatorTheme
 
 @Composable

@@ -1,4 +1,4 @@
-package com.dangxuanthong.projectcreator.repository
+package com.dangxuanthong.projectcreator.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.onDownload
@@ -17,15 +17,13 @@ import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
 
 @Single
-class ProjectApiService(private val client: HttpClient) {
+class GithubApiService(private val client: HttpClient) {
     suspend fun downloadProject(
         path: File,
         progress: ((Float?) -> Unit)? = null
     ) = withContext(Dispatchers.IO) {
         if (!path.exists()) path.mkdirs()
-        client.prepareGet(
-            "https://api.github.com/repos/dangxuanthong/projectcreator/zipball/sample-android"
-        ) {
+        client.prepareGet(URL) {
             headers {
                 append("Accept", "application/vnd.github+json")
             }
@@ -44,7 +42,7 @@ class ProjectApiService(private val client: HttpClient) {
                 while (entry != null) {
                     val rawName = entry.name
                     // Skip the outer directory: remove the first path component
-                    val normalizedName = rawName.substringAfter('/', rawName)
+                    val normalizedName = rawName.substringAfter('/')
 
                     // If normalizedName is empty (e.g. the root folder itself), skip it
                     if (normalizedName.isNotEmpty()) {
@@ -62,5 +60,10 @@ class ProjectApiService(private val client: HttpClient) {
                 }
             }
         }
+    }
+
+    companion object {
+        private const val URL =
+            "https://api.github.com/repos/dangxuanthong/projectcreator/zipball/sample-android"
     }
 }

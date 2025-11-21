@@ -1,4 +1,4 @@
-package com.dangxuanthong.projectcreator.screen
+package com.dangxuanthong.projectcreator.ui.screen
 
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
