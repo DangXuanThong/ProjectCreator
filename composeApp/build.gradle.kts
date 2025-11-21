@@ -32,11 +32,13 @@ kotlin {
             implementation(libs.ktor.serialization.xml)
             implementation(libs.ktor.auth)
 
+            implementation(libs.filekit.core)
+            implementation(libs.filekit.compose)
             implementation(libs.dotenv.kotlin)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.kotlinx.coroutines.swing)
             implementation("ch.qos.logback:logback-classic:1.5.21")
         }
 
@@ -54,6 +56,10 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.dangxuanthong.projectcreator"
             packageVersion = "1.0.0"
+
+            linux {
+                modules("jdk.security.auth")
+            }
         }
     }
 }

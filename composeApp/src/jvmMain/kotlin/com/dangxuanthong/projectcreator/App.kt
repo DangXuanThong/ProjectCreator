@@ -1,82 +1,74 @@
 package com.dangxuanthong.projectcreator
 
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.rememberScrollableState
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Tab
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
+import com.dangxuanthong.projectcreator.screen.AndroidProjectScreen
+import com.dangxuanthong.projectcreator.screen.MultiplatformProjectScreen
 import com.dangxuanthong.projectcreator.ui.theme.ProjectCreatorTheme
-import io.github.cdimascio.dotenv.dotenv
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.onDownload
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.headers
-import io.ktor.client.request.prepareGet
-import io.ktor.util.cio.writeChannel
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.copyAndClose
-import java.io.File
-import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 
 @Composable
 fun App() {
-    val scope = rememberCoroutineScope()
-    var data by remember { mutableStateOf("") }
-
-    LaunchedEffect(Unit) {
-        scope.launch {
-            val dotenv = dotenv { directory = "../" }
-            val client = HttpClient(CIO) {
-                install(Logging)
-            }
-            val file = File("C:/Users/Admin/Downloads/Sample.zip")
-
-            client.prepareGet(
-                "https://api.github.com/repos/dangxuanthong/projectcreator/zipball/sample-android"
-            ) {
-                headers {
-                    append("Accept", "application/vnd.github+json")
-                    bearerAuth(dotenv["GH_PAT"])
-                }
-                onDownload { bytesSentTotal, contentLength ->
-                    println("Received $bytesSentTotal bytes from $contentLength")
-                }
-            }.execute { httpResponse ->
-                val channel: ByteReadChannel = httpResponse.body()
-                channel.copyAndClose(file.writeChannel())
-                println("A file saved to ${file.path}")
-            }
-        }
-    }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     ProjectCreatorTheme {
         Surface {
-            Box(
-                Modifier.fillMaxSize().wrapContentSize().scrollable(
-                    rememberScrollableState { it },
-                    Orientation.Vertical
-                )
-            ) {
-                Text(data)
+            Scaffold(
+                topBar = {
+                    PrimaryTabRow(selectedTabIndex) {
+                        Tab(
+                            selected = selectedTabIndex == 0,
+                            onClick = { selectedTabIndex = 0 },
+                            text = { Text("Android project") }
+                        )
+                        Tab(
+                            selected = selectedTabIndex == 1,
+                            onClick = { selectedTabIndex = 1 },
+                            text = { Text("Multiplatform project") }
+                        )
+                    }
+                }
+            ) { innerPadding ->
+                AnimatedContent(
+                    selectedTabIndex,
+                    transitionSpec = {
+                        val animSpec = spring(
+                            stiffness = Spring.StiffnessMediumLow,
+                            visibilityThreshold = IntOffset.VisibilityThreshold
+                        )
+                        if (initialState < targetState) {
+                            slideIntoContainer(towards = SlideDirection.Left, animSpec) togetherWith
+                                slideOutOfContainer(towards = SlideDirection.Left, animSpec)
+                        } else {
+                            slideIntoContainer(SlideDirection.Right, animSpec) togetherWith
+                                slideOutOfContainer(towards = SlideDirection.Right, animSpec)
+                        }
+                    },
+                    modifier = Modifier.padding(innerPadding)
+                ) { tab ->
+                    when (tab) {
+                        0 -> AndroidProjectScreen(Modifier.fillMaxSize())
+                        1 -> MultiplatformProjectScreen(Modifier.fillMaxSize())
+                    }
+                }
             }
         }
     }
 }
-
-@Serializable
-data class Response(val content: String)
