@@ -1,5 +1,7 @@
 package com.dangxuanthong.projectcreator.api
 
+import com.dangxuanthong.projectcreator.model.DownloadInfo
+import com.dangxuanthong.projectcreator.model.Result
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.onDownload
 import io.ktor.client.request.headers
@@ -21,7 +23,7 @@ class GithubApiService(private val client: HttpClient) {
     suspend fun downloadProject(
         path: File,
         progress: ((Float?) -> Unit)? = null
-    ) = withContext(Dispatchers.IO) {
+    ): Result<DownloadInfo> = withContext(Dispatchers.IO) {
         if (!path.exists()) path.mkdirs()
         client.prepareGet(URL) {
             headers {
@@ -37,26 +39,30 @@ class GithubApiService(private val client: HttpClient) {
             val inputStream = channel.toInputStream()
 
             ZipInputStream(BufferedInputStream(inputStream)).use { zip ->
-                var entry: ZipEntry? = zip.nextEntry
+                try {
+                    var totalBytes = 0L
+                    var entry: ZipEntry? = zip.nextEntry
+                    while (entry != null) {
+                        val rawName = entry.name
+                        // Skip the outer directory: remove the first path component
+                        val normalizedName = rawName.substringAfter('/')
+                        // If normalizedName is empty (e.g. the root folder itself), skip it
+                        if (normalizedName.isNotEmpty()) {
+                            totalBytes += entry.compressedSize
+                            val outFile = File(path, normalizedName)
 
-                while (entry != null) {
-                    val rawName = entry.name
-                    // Skip the outer directory: remove the first path component
-                    val normalizedName = rawName.substringAfter('/')
-
-                    // If normalizedName is empty (e.g. the root folder itself), skip it
-                    if (normalizedName.isNotEmpty()) {
-                        val outFile = File(path, normalizedName)
-
-                        if (entry.isDirectory) outFile.mkdirs()
-                        else {
-                            outFile.parentFile?.mkdirs()
-                            FileOutputStream(outFile).use { fos -> zip.copyTo(fos) }
+                            if (entry.isDirectory) outFile.mkdirs()
+                            else {
+                                outFile.parentFile?.mkdirs()
+                                FileOutputStream(outFile).use { fos -> zip.copyTo(fos) }
+                            }
                         }
+                        zip.closeEntry()
+                        entry = zip.nextEntry
                     }
-
-                    zip.closeEntry()
-                    entry = zip.nextEntry
+                    Result.Success(DownloadInfo(totalBytes, path.absolutePath))
+                } catch (e: Exception) {
+                    Result.Error(e)
                 }
             }
         }

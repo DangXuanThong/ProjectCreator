@@ -43,9 +43,6 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             api(libs.koin.annotations)
         }
-        commonMain.configure {
-            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
-        }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
@@ -55,6 +52,10 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+    }
+
+    compilerOptions {
+        freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
     }
 }
 
