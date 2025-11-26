@@ -30,24 +30,29 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
     }
 
     fun onCreateProject() = viewModelScope.launch {
-        with(uiState.value) {
-            uiState.update { it.copy(status = Status.Loading) }
-            val projectName = projectName.takeIf(String::isNotBlank) ?: "My App"
+        uiState.update { it.copy(status = Status.Loading) }
+        try {
+            val name = uiState.value.projectName.takeIf { it.isNotBlank() } ?: "My App"
+            val path = "${uiState.value.projectPath}/$name"
+
             log += "Downloading template...\n"
-            when (val result = projectRepository.saveProject("$projectPath/$projectName")) {
-                is Result.Success -> {
-                    log += "Downloaded ${result.data.totalBytes} bytes.\n"
-                    uiState.update { it.copy(status = Status.Success) }
-                }
-                is Result.Error -> {
-                    log += (result.exception.message ?: "Unknown error") + "\n"
-                    uiState.update {
-                        it.copy(status = Status.Error("Failed to create project"))
-                    }
-                }
+            val downloadResult = projectRepository.saveProject(path)
+            require(downloadResult is Result.Success) {
+                (downloadResult as Result.Error).description
             }
+            log += "Downloaded ${downloadResult.data.totalBytes} bytes.\n"
+
+            log += "Checking downloaded files\n"
+            val checkResult = projectRepository.verifyProject(path)
+            require(checkResult is Result.Success) { (checkResult as Result.Error).description }
 
             log += "Created project.\n"
+            uiState.update { it.copy(status = Status.Idle) }
+        } catch (e: IllegalArgumentException) {
+            e.message?.let { log += "$it\n" }
+            uiState.update {
+                it.copy(status = Status.Error("Failed to create project"))
+            }
         }
     }
 }
@@ -64,6 +69,5 @@ data class AndroidProjectState(
 sealed interface Status {
     data object Idle : Status
     data object Loading : Status
-    data object Success : Status
     data class Error(val message: String) : Status
 }
