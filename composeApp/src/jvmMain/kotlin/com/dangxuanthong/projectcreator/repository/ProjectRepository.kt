@@ -10,4 +10,6 @@ interface ProjectRepository {
     suspend fun verifyProject(path: String): Result<Unit>
 
     suspend fun getHashValue(file: File): Result<String>
+
+    suspend fun renameProject(path: String, newName: String): Result<Unit>
 }

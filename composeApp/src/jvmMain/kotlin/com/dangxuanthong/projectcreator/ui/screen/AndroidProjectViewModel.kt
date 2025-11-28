@@ -46,6 +46,10 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
             val checkResult = projectRepository.verifyProject(path)
             require(checkResult is Result.Success) { (checkResult as Result.Error).description }
 
+            log += "Changing project name\n"
+            val renameResult = projectRepository.renameProject(path, name)
+            require(renameResult is Result.Success) { (renameResult as Result.Error).description }
+
             log += "Created project.\n"
             uiState.update { it.copy(status = Status.Idle) }
         } catch (e: IllegalArgumentException) {

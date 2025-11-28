@@ -20,6 +20,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Named
@@ -84,6 +85,7 @@ class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
     } catch (_: UnresolvedAddressException) {
         Result.Error(Exception("Cannot connect to GitHub"))
     } catch (e: Exception) {
+        if (e is CancellationException) throw e
         Result.Error(e)
     }
 

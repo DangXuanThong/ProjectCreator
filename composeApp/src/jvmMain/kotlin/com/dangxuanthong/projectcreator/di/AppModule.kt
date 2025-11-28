@@ -15,7 +15,6 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.ComponentScan
-import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
@@ -30,7 +29,7 @@ class AppModule {
     @Single
     fun provideHttpClientEngine(): HttpClientEngineFactory<CIOEngineConfig> = CIO
 
-    @Factory
+    @Single
     @Named("GitHub")
     fun provideHttpClient(
         engine: HttpClientEngineFactory<HttpClientEngineConfig>,
