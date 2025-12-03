@@ -91,19 +91,40 @@ class GHProjectRepository(private val apiService: GitHubApiService) : ProjectRep
     }
 
     override suspend fun renamePackage(path: Path, newPackage: String) = runCatchIOExceptions {
-        val oldPath = path.resolve("app/src/main/kotlin/com/dangxuanthong/sampleapp")
-        val newPath = path.resolve("app/src/main/kotlin/${newPackage.replace(".", "/")}")
+        moveSourceSet(path, newPackage, "main")
+        moveSourceSet(path, newPackage, "test")
+        moveSourceSet(path, newPackage, "androidTest")
+        // Change android.namespace and applicationId in build.gradle.kts
+        path.resolve("app/build.gradle.kts").mapLine {
+            if (it.contains("namespace")) it.replaceAfter("\"", "$newPackage\"")
+            else if (it.contains("applicationId")) it.replaceAfter("\"", "$newPackage\"")
+            else it
+        }
+        Result.Success(Unit)
+    }
+
+    private suspend inline fun <T> runCatchIOExceptions(
+        crossinline block: suspend () -> Result<T>
+    ) = try {
+        withContext(Dispatchers.IO) { block() }
+    } catch (e: IOException) {
+        Result.Error(e)
+    }
+
+    private fun moveSourceSet(path: Path, newPackage: String, sourceSet: String) {
+        val oldPath = path.resolve("app/src/$sourceSet/kotlin/com/dangxuanthong/sampleapp")
+        val newPath = path.resolve("app/src/$sourceSet/kotlin/${newPackage.replace(".", "/")}")
         // Create new directory
         newPath.createDirectories()
         // Move files to new package
         oldPath.forEachDirectoryEntry { it.moveTo(newPath / it.name) }
-        // Delete old package
+        // Delete old packages
         var oldDir = oldPath
         while (oldDir.listDirectoryEntries().isEmpty()) {
             oldDir.deleteExisting()
             oldDir = oldDir.parent
         }
-        // Change package of .kt files
+        // Change package of *.kt files
         newPath.visitFileTree {
             onVisitFile { file, _ ->
                 if (file.extension != "kt") return@onVisitFile FileVisitResult.CONTINUE
@@ -114,16 +135,6 @@ class GHProjectRepository(private val apiService: GitHubApiService) : ProjectRep
                 FileVisitResult.CONTINUE
             }
         }
-
-        Result.Success(Unit)
-    }
-
-    private suspend inline fun <T> runCatchIOExceptions(
-        crossinline block: suspend () -> Result<T>
-    ) = try {
-        withContext(Dispatchers.IO) { block() }
-    } catch (e: IOException) {
-        Result.Error(e)
     }
 
     private inline fun File.mapLine(
