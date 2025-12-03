@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dangxuanthong.projectcreator.model.Result
 import com.dangxuanthong.projectcreator.repository.ProjectRepository
+import kotlin.io.path.Path
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -23,10 +24,22 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
 
     fun onUpdateProjectName(projectName: String) {
         uiState.update { it.copy(projectName = projectName) }
+        updatePackageNameBasedOnName()
     }
 
     fun onUpdateProjectPath(projectPath: String) {
         uiState.update { it.copy(projectPath = projectPath) }
+    }
+
+    fun onUpdatePackageName(packageName: String) {
+        uiState.update { it.copy(packageName = packageName) }
+    }
+
+    fun updatePackageNameBasedOnName() {
+        uiState.value.run {
+            val normalizedName = projectName.replace(" ", "").lowercase()
+            onUpdatePackageName(packageName.replaceAfterLast(".", normalizedName))
+        }
     }
 
     fun onCreateProject() = viewModelScope.launch {
@@ -50,6 +63,13 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
             val renameResult = projectRepository.renameProject(path, name)
             require(renameResult is Result.Success) { (renameResult as Result.Error).description }
 
+            log += "Changing package\n"
+            val renamePackageResult =
+                projectRepository.renamePackage(Path(path), uiState.value.packageName)
+            require(renamePackageResult is Result.Success) {
+                (renamePackageResult as Result.Error).description
+            }
+
             log += "Created project.\n"
             uiState.update { it.copy(status = Status.Idle) }
         } catch (e: IllegalArgumentException) {
@@ -62,8 +82,9 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
 }
 
 data class AndroidProjectState(
-    val projectName: String = "",
+    val projectName: String = "My App",
     val projectPath: String = "",
+    val packageName: String = "com.example.myapp",
     val status: Status = Status.Idle
 ) {
     val isCreateProjectEnable: Boolean

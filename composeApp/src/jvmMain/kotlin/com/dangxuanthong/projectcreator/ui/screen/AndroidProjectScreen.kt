@@ -56,6 +56,14 @@ fun AndroidProjectScreen(
                 singleLine = true
             )
 
+            Text("Package name")
+            OutlinedTextField(
+                value = uiState.packageName,
+                onValueChange = vm::onUpdatePackageName,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
             Text("Project location:")
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(

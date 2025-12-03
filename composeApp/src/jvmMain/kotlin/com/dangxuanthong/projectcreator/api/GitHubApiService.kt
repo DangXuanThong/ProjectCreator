@@ -31,7 +31,7 @@ class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
     suspend fun downloadProject(
         path: File,
         progress: ((Float?) -> Unit)? = null
-    ): Result<DownloadInfo> = runCatchNetworkErrors {
+    ): Result<DownloadInfo> = runCatchNetworkExceptions {
         if (!path.exists()) path.mkdirs()
         client.prepareGet(TEMPLATE_URL) {
             accept(ContentType.parse("application/vnd.github+json"))
@@ -70,7 +70,7 @@ class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
         }
     }
 
-    suspend fun getShaForProject(): Result<ShaTree> = runCatchNetworkErrors {
+    suspend fun getShaForProject(): Result<ShaTree> = runCatchNetworkExceptions {
         val shaTree = client.get(SHA_TREE_URL) {
             accept(ContentType.parse("application/vnd.github+json"))
             parameter("recursive", 1)
@@ -78,7 +78,7 @@ class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
         Result.Success(shaTree)
     }
 
-    private suspend inline fun <T> runCatchNetworkErrors(
+    private suspend inline fun <T> runCatchNetworkExceptions(
         crossinline block: suspend () -> Result<T>
     ): Result<T> = try {
         withContext(Dispatchers.IO) { block() }

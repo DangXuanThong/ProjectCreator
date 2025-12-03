@@ -4,10 +4,28 @@ import com.dangxuanthong.projectcreator.api.GitHubApiService
 import com.dangxuanthong.projectcreator.model.DownloadInfo
 import com.dangxuanthong.projectcreator.model.Result
 import java.io.File
+import java.io.IOException
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import kotlin.io.path.bufferedWriter
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.div
+import kotlin.io.path.extension
+import kotlin.io.path.forEachDirectoryEntry
+import kotlin.io.path.forEachLine
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.moveTo
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.visitFileTree
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.io.files.FileNotFoundException
 import org.koin.core.annotation.Single
 
@@ -58,10 +76,7 @@ class GHProjectRepository(private val apiService: GitHubApiService) : ProjectRep
         Result.Error(e)
     }
 
-    override suspend fun renameProject(
-        path: String,
-        newName: String
-    ): Result<Unit> = try {
+    override suspend fun renameProject(path: String, newName: String): Result<Unit> = try {
         val root = File(path)
         // Change project name in gradle settings file
         val file = File(root, "settings.gradle.kts")
@@ -72,6 +87,42 @@ class GHProjectRepository(private val apiService: GitHubApiService) : ProjectRep
         Result.Success(Unit)
     } catch (e: Exception) {
         if (e is CancellationException) throw e
+        Result.Error(e)
+    }
+
+    override suspend fun renamePackage(path: Path, newPackage: String) = runCatchIOExceptions {
+        val oldPath = path.resolve("app/src/main/kotlin/com/dangxuanthong/sampleapp")
+        val newPath = path.resolve("app/src/main/kotlin/${newPackage.replace(".", "/")}")
+        // Create new directory
+        newPath.createDirectories()
+        // Move files to new package
+        oldPath.forEachDirectoryEntry { it.moveTo(newPath / it.name) }
+        // Delete old package
+        var oldDir = oldPath
+        while (oldDir.listDirectoryEntries().isEmpty()) {
+            oldDir.deleteExisting()
+            oldDir = oldDir.parent
+        }
+        // Change package of .kt files
+        newPath.visitFileTree {
+            onVisitFile { file, _ ->
+                if (file.extension != "kt") return@onVisitFile FileVisitResult.CONTINUE
+                file.mapLine {
+                    if (it.startsWith("package")) "package $newPackage"
+                    else it
+                }
+                FileVisitResult.CONTINUE
+            }
+        }
+
+        Result.Success(Unit)
+    }
+
+    private suspend inline fun <T> runCatchIOExceptions(
+        crossinline block: suspend () -> Result<T>
+    ) = try {
+        withContext(Dispatchers.IO) { block() }
+    } catch (e: IOException) {
         Result.Error(e)
     }
 
@@ -86,5 +137,17 @@ class GHProjectRepository(private val apiService: GitHubApiService) : ProjectRep
             }
         }
         Files.move(tempFile.toPath(), this.toPath(), StandardCopyOption.REPLACE_EXISTING)
+    }
+
+    private inline fun Path.mapLine(transform: (String) -> String) {
+        createTempFile(nameWithoutExtension).run {
+            bufferedWriter().use { writer ->
+                this@mapLine.forEachLine {
+                    writer.write(transform(it))
+                    writer.newLine()
+                }
+            }
+            moveTo(this@mapLine, overwrite = true)
+        }
     }
 }
