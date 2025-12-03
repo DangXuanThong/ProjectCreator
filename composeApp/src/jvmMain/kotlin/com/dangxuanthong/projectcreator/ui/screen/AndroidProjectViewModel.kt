@@ -46,7 +46,7 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
         uiState.update { it.copy(status = Status.Loading) }
         try {
             val name = uiState.value.projectName.takeIf { it.isNotBlank() } ?: "My App"
-            val path = "${uiState.value.projectPath}/$name"
+            val path = Path(uiState.value.projectPath, name)
 
             log += "Downloading template...\n"
             val downloadResult = projectRepository.saveProject(path)
@@ -65,7 +65,7 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
 
             log += "Changing package\n"
             val renamePackageResult =
-                projectRepository.renamePackage(Path(path), uiState.value.packageName)
+                projectRepository.renamePackage(path, uiState.value.packageName)
             require(renamePackageResult is Result.Success) {
                 (renamePackageResult as Result.Error).description
             }

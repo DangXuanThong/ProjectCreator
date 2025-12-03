@@ -16,10 +16,14 @@ import io.ktor.util.network.UnresolvedAddressException
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileOutputStream
+import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createDirectory
+import kotlin.io.path.div
+import kotlin.io.path.outputStream
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,10 +33,10 @@ import org.koin.core.annotation.Single
 @Single
 class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
     suspend fun downloadProject(
-        path: File,
+        path: Path,
         progress: ((Float?) -> Unit)? = null
     ): Result<DownloadInfo> = runCatchNetworkExceptions {
-        if (!path.exists()) path.mkdirs()
+        path.createDirectories()
         client.prepareGet(TEMPLATE_URL) {
             accept(ContentType.parse("application/vnd.github+json"))
             if (progress != null) onDownload { current, total ->
@@ -54,18 +58,18 @@ class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
                     // If normalizedName is empty (e.g. the root folder itself), skip it
                     if (normalizedName.isNotEmpty()) {
                         totalBytes += entry.compressedSize
-                        val outFile = File(path, normalizedName)
+                        val outFile = path / normalizedName
 
-                        if (entry.isDirectory) outFile.mkdirs()
+                        if (entry.isDirectory) outFile.createDirectory()
                         else {
-                            outFile.parentFile?.mkdirs()
-                            FileOutputStream(outFile).use { fos -> zip.copyTo(fos) }
+                            outFile.parent?.createDirectories()
+                            outFile.outputStream().use { fos -> zip.copyTo(fos) }
                         }
                     }
                     zip.closeEntry()
                     entry = zip.nextEntry
                 }
-                Result.Success(DownloadInfo(totalBytes, path.absolutePath))
+                Result.Success(DownloadInfo(totalBytes, path.absolutePathString()))
             }
         }
     }
