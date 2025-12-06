@@ -79,17 +79,31 @@ class GHProjectRepository(private val apiService: GitHubApiService) : ProjectRep
         Result.Error(e)
     }
 
-    override suspend fun renameProject(path: Path, newName: String): Result<Unit> = try {
-        // Change project name in gradle settings file
-        path.resolve("settings.gradle.kts").mapLine {
-            if (!it.contains("rootProject.name")) it
-            else it.replaceAfter("= ", "\"$newName\"")
+    override suspend fun renameProject(path: Path, newName: String): Result<Unit> =
+        runCatchIOExceptions {
+            with(path) {
+                // Change project name in gradle settings file
+                resolve("settings.gradle.kts").mapLine {
+                    if (!it.contains("rootProject.name")) it
+                    else it.replaceAfter("= ", "\"$newName\"")
+                }
+                // Change app name in strings.xml
+                resolve("app/src/main/res/values/strings.xml").mapLine {
+                    if (!it.contains("app_name")) it
+                    else "<string name=\"app_name\">$newName</string>"
+                }
+
+                resolve("app/src/main/res/values/themes.xml").mapLine {
+                    if (!it.contains("Theme.SampleApp")) it
+                    else it.replace("SampleApp", newName.replace(" ", ""))
+                }
+                resolve("app/src/main/AndroidManifest.xml").mapLine {
+                    if (!it.contains("android:theme")) it
+                    else it.replace("SampleApp", newName.replace(" ", ""))
+                }
+            }
+            Result.Success(Unit)
         }
-        Result.Success(Unit)
-    } catch (e: Exception) {
-        if (e is CancellationException) throw e
-        Result.Error(e)
-    }
 
     override suspend fun renamePackage(path: Path, newPackage: String) = runCatchIOExceptions {
         moveSourceSet(path, newPackage, "main")
@@ -130,8 +144,10 @@ class GHProjectRepository(private val apiService: GitHubApiService) : ProjectRep
             onVisitFile { file, _ ->
                 if (file.extension != "kt") return@onVisitFile FileVisitResult.CONTINUE
                 file.mapLine {
-                    if (it.startsWith("package")) "package $newPackage"
-                    else it
+                    if (!it.startsWith("package")) it
+                    else "package $newPackage".also {
+                        return@onVisitFile FileVisitResult.CONTINUE
+                    }
                 }
                 FileVisitResult.CONTINUE
             }
