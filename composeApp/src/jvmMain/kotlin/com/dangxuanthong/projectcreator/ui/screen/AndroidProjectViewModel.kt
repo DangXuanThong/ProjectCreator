@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dangxuanthong.projectcreator.model.Result
+import com.dangxuanthong.projectcreator.model.then
 import com.dangxuanthong.projectcreator.repository.ProjectRepository
 import kotlin.io.path.Path
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,39 +45,30 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
 
     fun onCreateProject() = viewModelScope.launch {
         uiState.update { it.copy(status = Status.Loading) }
-        try {
-            val name = uiState.value.projectName.takeIf { it.isNotBlank() } ?: "My App"
-            val path = Path(uiState.value.projectPath, name)
+        val name = uiState.value.projectName.takeIf { it.isNotBlank() } ?: "My App"
+        val path = Path(uiState.value.projectPath, name)
 
-            log += "Downloading template...\n"
-            val downloadResult = projectRepository.saveProject(path)
-            require(downloadResult is Result.Success) {
-                (downloadResult as Result.Error).description
-            }
-            log += "Downloaded ${downloadResult.data.totalBytes} bytes.\n"
-
+        log += "Downloading template...\n"
+        val result = projectRepository.saveProject(path).then {
+            log += "Downloaded ${it.totalBytes} bytes.\n"
             log += "Checking downloaded files\n"
-            val checkResult = projectRepository.verifyProject(path)
-            require(checkResult is Result.Success) { (checkResult as Result.Error).description }
-
+            projectRepository.verifyProject(path)
+        }.then {
             log += "Changing project name\n"
-            val renameResult = projectRepository.renameProject(path, name)
-            require(renameResult is Result.Success) { (renameResult as Result.Error).description }
-
+            projectRepository.renameProject(path, name)
+        }.then {
             log += "Changing package\n"
-            val renamePackageResult =
-                projectRepository.renamePackage(path, uiState.value.packageName)
-            require(renamePackageResult is Result.Success) {
-                (renamePackageResult as Result.Error).description
-            }
-
-            log += "Created project.\n"
-            uiState.update { it.copy(status = Status.Idle) }
-        } catch (e: IllegalArgumentException) {
-            e.message?.let { log += "$it\n" }
+            projectRepository.renamePackage(path, uiState.value.packageName)
+        }.catch { _, desc ->
+            log += desc + "\n"
             uiState.update {
                 it.copy(status = Status.Error("Failed to create project"))
             }
+        }
+
+        if (result is Result.Success) {
+            log += "Created project.\n"
+            uiState.update { it.copy(status = Status.Idle) }
         }
     }
 }
