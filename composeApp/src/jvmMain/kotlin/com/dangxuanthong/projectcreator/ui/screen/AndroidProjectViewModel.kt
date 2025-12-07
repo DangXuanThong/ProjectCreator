@@ -7,16 +7,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dangxuanthong.projectcreator.model.Result
 import com.dangxuanthong.projectcreator.model.then
-import com.dangxuanthong.projectcreator.repository.ProjectRepository
+import com.dangxuanthong.projectcreator.repository.OnlineProjectRepository
+import com.dangxuanthong.projectcreator.repository.ProjectAlterRepository
 import kotlin.io.path.Path
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import org.koin.core.parameter.parametersOf
 
 @KoinViewModel
-class AndroidProjectViewModel(private val projectRepository: ProjectRepository) : ViewModel() {
+class AndroidProjectViewModel(private val onlineProjectRepository: OnlineProjectRepository) :
+    ViewModel(),
+    KoinComponent {
     val uiState: StateFlow<AndroidProjectState>
         field = MutableStateFlow(AndroidProjectState())
 
@@ -49,16 +55,17 @@ class AndroidProjectViewModel(private val projectRepository: ProjectRepository) 
         val path = Path(uiState.value.projectPath, name)
 
         log += "Downloading template...\n"
-        val result = projectRepository.saveProject(path).then {
+        val projectAlterRepository: ProjectAlterRepository by inject { parametersOf(path) }
+        val result = onlineProjectRepository.saveProject(path).then {
             log += "Downloaded ${it.totalBytes} bytes.\n"
             log += "Checking downloaded files\n"
-            projectRepository.verifyProject(path)
+            onlineProjectRepository.verifyProject(path)
         }.then {
             log += "Changing project name\n"
-            projectRepository.renameProject(path, name)
+            projectAlterRepository.renameProject(name)
         }.then {
             log += "Changing package\n"
-            projectRepository.renamePackage(path, uiState.value.packageName)
+            projectAlterRepository.renamePackage(uiState.value.packageName)
         }.catch { _, desc ->
             log += desc + "\n"
             uiState.update {
