@@ -1,5 +1,6 @@
 package com.dangxuanthong.projectcreator.di
 
+import com.dangxuanthong.projectcreator.repository.ProjectConfigRepository
 import io.github.cdimascio.dotenv.Dotenv
 import io.github.cdimascio.dotenv.dotenv
 import io.ktor.client.HttpClient
@@ -13,15 +14,19 @@ import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
+import java.nio.file.Path
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
+import org.koin.core.parameter.parametersOf
 
 @Module
 @ComponentScan("com.dangxuanthong.projectcreator")
-class AppModule {
+class AppModule : KoinComponent {
 
     @Single
     fun provideDotEnv() = dotenv { directory = ".." }
@@ -50,4 +55,8 @@ class AppModule {
             }
         }
     }
+
+    @Single
+    fun provideProjectConfigRepository(): (Path) -> ProjectConfigRepository =
+        { get { parametersOf(it) } }
 }

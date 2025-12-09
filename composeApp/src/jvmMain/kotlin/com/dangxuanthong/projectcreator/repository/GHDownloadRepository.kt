@@ -18,8 +18,8 @@ import kotlinx.io.files.FileNotFoundException
 import org.koin.core.annotation.Factory
 
 @Factory
-class GHOnlineProjectRepository(private val apiService: GitHubApiService) :
-    OnlineProjectRepository {
+class GHDownloadRepository(private val apiService: GitHubApiService) :
+    ProjectDownloadRepository {
 
     override suspend fun saveProject(path: Path): Result<DownloadInfo> =
         apiService.downloadProject(path)
@@ -28,7 +28,7 @@ class GHOnlineProjectRepository(private val apiService: GitHubApiService) :
         check(path.exists() && path.isDirectory()) { "Project folder does not exist" }
 
         val shaTree = apiService.getShaForProject()
-        if (shaTree is Result.Error) return Result.Error(shaTree.exception)
+        if (shaTree is Result.Error) return shaTree
 
         val items = (shaTree as Result.Success).data.tree.filter { it.type == "blob" }
         items.forEach {
@@ -37,7 +37,7 @@ class GHOnlineProjectRepository(private val apiService: GitHubApiService) :
                 FileNotFoundException("Missing file ${file.absolutePathString()}")
             )
             val hash = getHashValue(file)
-            if (hash is Result.Error) return Result.Error(hash.exception)
+            if (hash is Result.Error) return hash
             if ((hash as Result.Success).data != it.sha) return Result.Error(
                 Exception("Checksum failed for file ${file.name}")
             )

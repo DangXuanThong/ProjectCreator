@@ -7,22 +7,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dangxuanthong.projectcreator.model.Result
 import com.dangxuanthong.projectcreator.model.then
-import com.dangxuanthong.projectcreator.repository.OnlineProjectRepository
-import com.dangxuanthong.projectcreator.repository.ProjectAlterRepository
+import com.dangxuanthong.projectcreator.repository.ProjectConfigRepository
+import com.dangxuanthong.projectcreator.repository.ProjectDownloadRepository
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-import org.koin.core.parameter.parametersOf
 
 @KoinViewModel
-class AndroidProjectViewModel(private val onlineProjectRepository: OnlineProjectRepository) :
-    ViewModel(),
-    KoinComponent {
+class AndroidProjectViewModel(
+    private val downloadRepository: ProjectDownloadRepository,
+    private val getProjectConfigRepository: (Path) -> ProjectConfigRepository
+) : ViewModel() {
     val uiState: StateFlow<AndroidProjectState>
         field = MutableStateFlow(AndroidProjectState())
 
@@ -55,17 +54,17 @@ class AndroidProjectViewModel(private val onlineProjectRepository: OnlineProject
         val path = Path(uiState.value.projectPath, name)
 
         log += "Downloading template...\n"
-        val projectAlterRepository: ProjectAlterRepository by inject { parametersOf(path) }
-        val result = onlineProjectRepository.saveProject(path).then {
+        val configRepository = getProjectConfigRepository(path)
+        val result = downloadRepository.saveProject(path).then {
             log += "Downloaded ${it.totalBytes} bytes.\n"
             log += "Checking downloaded files\n"
-            onlineProjectRepository.verifyProject(path)
+            downloadRepository.verifyProject(path)
         }.then {
             log += "Changing project name\n"
-            projectAlterRepository.renameProject(name)
+            configRepository.renameProject(name)
         }.then {
             log += "Changing package\n"
-            projectAlterRepository.renamePackage(uiState.value.packageName)
+            configRepository.renamePackage(uiState.value.packageName)
         }.catch { _, desc ->
             log += desc + "\n"
             uiState.update {

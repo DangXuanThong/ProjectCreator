@@ -23,20 +23,20 @@ import org.koin.core.annotation.Factory
 import org.koin.core.annotation.InjectedParam
 
 @Factory
-class DefaultProjectAlterRepository(@InjectedParam private val root: Path) :
-    ProjectAlterRepository {
+class DefaultProjectConfigRepository(@InjectedParam private val root: Path) :
+    ProjectConfigRepository {
 
-    override suspend fun renameProject(newName: String): Result<Unit> = runCatchIOExceptions {
+    override suspend fun renameProject(newName: String) = runCatchIOExceptions {
         with(root) {
             // Change project name in gradle settings file
             resolve("settings.gradle.kts").mapLine {
                 if (!it.contains("rootProject.name")) it
-                else it.replaceAfter("= ", "\"$newName\"")
+                else it.replace("SampleApp", newName)
             }
             // Change app name in strings.xml
             resolve("app/src/main/res/values/strings.xml").mapLine {
                 if (!it.contains("app_name")) it
-                else "<string name=\"app_name\">$newName</string>"
+                else it.replace("Sample App", newName)
             }
 
             resolve("app/src/main/res/values/themes.xml").mapLine {
@@ -52,9 +52,9 @@ class DefaultProjectAlterRepository(@InjectedParam private val root: Path) :
     }
 
     override suspend fun renamePackage(newPackage: String) = runCatchIOExceptions {
-        moveSourceSet(root, newPackage, "main")
-        moveSourceSet(root, newPackage, "test")
-        moveSourceSet(root, newPackage, "androidTest")
+        moveSourceSet(newPackage, "main")
+        moveSourceSet(newPackage, "test")
+        moveSourceSet(newPackage, "androidTest")
         // Change android.namespace and applicationId in build.gradle.kts
         root.resolve("app/build.gradle.kts").mapLine {
             if (it.contains("namespace")) it.replaceAfter("\"", "$newPackage\"")
@@ -84,9 +84,9 @@ class DefaultProjectAlterRepository(@InjectedParam private val root: Path) :
         }
     }
 
-    private fun moveSourceSet(path: Path, newPackage: String, sourceSet: String) {
-        val oldPath = path.resolve("app/src/$sourceSet/kotlin/com/dangxuanthong/sampleapp")
-        val newPath = path.resolve("app/src/$sourceSet/kotlin/${newPackage.replace(".", "/")}")
+    private fun moveSourceSet(newPackage: String, sourceSet: String) {
+        val oldPath = root.resolve("app/src/$sourceSet/kotlin/com/dangxuanthong/sampleapp")
+        val newPath = root.resolve("app/src/$sourceSet/kotlin/${newPackage.replace(".", "/")}")
         // Create new directory
         newPath.createDirectories()
         // Move files to new package

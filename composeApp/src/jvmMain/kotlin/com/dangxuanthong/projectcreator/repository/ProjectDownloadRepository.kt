@@ -4,7 +4,7 @@ import com.dangxuanthong.projectcreator.model.DownloadInfo
 import com.dangxuanthong.projectcreator.model.Result
 import java.nio.file.Path
 
-interface OnlineProjectRepository {
+interface ProjectDownloadRepository {
     suspend fun saveProject(path: Path): Result<DownloadInfo>
 
     suspend fun verifyProject(path: Path): Result<Unit>
