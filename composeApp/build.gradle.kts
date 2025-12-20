@@ -63,6 +63,10 @@ dependencies {
     add("kspJvm", libs.koin.compiler)
 }
 
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
 compose.desktop {
     application {
         mainClass = "com.dangxuanthong.projectcreator.MainKt"
