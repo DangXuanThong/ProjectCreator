@@ -12,6 +12,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
+import io.ktor.http.isSuccess
 import io.ktor.util.network.UnresolvedAddressException
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.jvm.javaio.toInputStream
@@ -43,6 +44,10 @@ class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
                 progress.invoke(total?.let { current.toFloat() / it })
             }
         }.execute { response ->
+            if (!response.status.isSuccess()) return@execute Result.Error(
+                Exception(response.status.description)
+            )
+
             // Get a ByteReadChannel, streaming as it's downloaded
             val channel: ByteReadChannel = response.bodyAsChannel()
             // Convert to InputStream so we can use ZipInputStream
