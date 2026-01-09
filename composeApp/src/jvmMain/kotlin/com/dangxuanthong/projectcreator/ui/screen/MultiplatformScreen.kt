@@ -8,7 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun MultiplatformProjectScreen(modifier: Modifier = Modifier) {
+fun MultiplatformScreen(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text("Unimplemented yet")
     }

@@ -1,4 +1,4 @@
-package com.dangxuanthong.projectcreator.ui.screen
+package com.dangxuanthong.projectcreator.ui.screen.android
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
-class AndroidProjectViewModel(
+class AndroidViewModel(
     private val downloadRepository: ProjectDownloadRepository,
     private val getProjectConfigRepository: (Path) -> ProjectConfigRepository
 ) : ViewModel() {

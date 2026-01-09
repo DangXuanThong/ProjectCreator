@@ -1,4 +1,4 @@
-package com.dangxuanthong.projectcreator.ui.screen
+package com.dangxuanthong.projectcreator.ui.screen.android
 
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -27,9 +27,9 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLaunche
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun AndroidProjectScreen(
+fun AndroidScreen(
     modifier: Modifier = Modifier,
-    vm: AndroidProjectViewModel = koinViewModel(),
+    vm: AndroidViewModel = koinViewModel(),
     fileKitSettings: FileKitDialogSettings = FileKitDialogSettings.createDefault()
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
