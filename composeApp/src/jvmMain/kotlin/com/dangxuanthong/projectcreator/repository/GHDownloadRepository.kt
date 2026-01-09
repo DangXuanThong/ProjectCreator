@@ -21,13 +21,33 @@ import org.koin.core.annotation.Factory
 class GHDownloadRepository(private val apiService: GitHubApiService) :
     ProjectDownloadRepository {
 
+    context(type: ProjectType)
     override suspend fun saveProject(path: Path): Result<DownloadInfo> =
-        apiService.downloadProject(path)
+        when (type) {
+            ProjectType.ANDROID -> apiService.downloadProject(
+                path = path,
+                url = TEMPLATE_URL + "sample-android"
+            )
 
+            ProjectType.MULTIPLATFORM -> TODO()
+
+            ProjectType.JAVA_WEB -> apiService.downloadProject(
+                path = path,
+                url = TEMPLATE_URL + "sample-java-ee"
+            )
+        }
+
+    context(type: ProjectType)
     override suspend fun verifyProject(path: Path): Result<Unit> {
         check(path.exists() && path.isDirectory()) { "Project folder does not exist" }
 
-        val shaTree = apiService.getShaForProject()
+        val shaTree = apiService.run {
+            when (type) {
+                ProjectType.ANDROID -> getShaForProject(SHA_TREE_URL + "sample-android")
+                ProjectType.MULTIPLATFORM -> TODO()
+                ProjectType.JAVA_WEB -> getShaForProject(SHA_TREE_URL + "sample-java-ee")
+            }
+        }
         if (shaTree is Result.Error) return shaTree
 
         val items = (shaTree as Result.Success).data.tree.filter { it.type == "blob" }
@@ -64,5 +84,12 @@ class GHDownloadRepository(private val apiService: GitHubApiService) :
     } catch (e: Exception) {
         if (e is CancellationException) throw e
         Result.Error(e)
+    }
+
+    companion object {
+        private const val TEMPLATE_URL =
+            "https://api.github.com/repos/dangxuanthong/projectcreator/zipball/"
+        private const val SHA_TREE_URL =
+            "https://api.github.com/repos/dangxuanthong/projectcreator/git/trees/"
     }
 }

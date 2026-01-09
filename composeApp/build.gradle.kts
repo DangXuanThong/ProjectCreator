@@ -55,7 +55,7 @@ kotlin {
     }
 
     compilerOptions {
-        freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
+        freeCompilerArgs.addAll("-XXLanguage:+ExplicitBackingFields", "-Xcontext-parameters")
     }
 }
 

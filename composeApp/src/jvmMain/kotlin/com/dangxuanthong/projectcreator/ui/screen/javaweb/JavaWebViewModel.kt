@@ -9,6 +9,7 @@ import com.dangxuanthong.projectcreator.model.Result
 import com.dangxuanthong.projectcreator.model.then
 import com.dangxuanthong.projectcreator.repository.ProjectConfigRepository
 import com.dangxuanthong.projectcreator.repository.ProjectDownloadRepository
+import com.dangxuanthong.projectcreator.repository.ProjectType
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,20 +56,22 @@ class JavaWebViewModel(
 
         log += "Downloading template...\n"
         val configRepository = getProjectConfigRepository(path)
-        val result = downloadRepository.saveProject(path).then {
-            log += "Downloaded ${it.totalBytes} bytes.\n"
-            log += "Checking downloaded files\n"
-            downloadRepository.verifyProject(path)
-        }.then {
-            log += "Changing project name\n"
-            configRepository.renameProject(name)
-        }.then {
-            log += "Changing package\n"
-            configRepository.renamePackage(uiState.value.packageName)
-        }.catch { _, desc ->
-            log += desc + "\n"
-            uiState.update {
-                it.copy(status = Status.Error("Failed to create project"))
+        val result = with(ProjectType.JAVA_WEB) {
+            downloadRepository.saveProject(path).then {
+                log += "Downloaded ${it.totalBytes} bytes.\n"
+                log += "Checking downloaded files\n"
+                downloadRepository.verifyProject(path)
+            }.then {
+                log += "Changing project name\n"
+                configRepository.renameProject(name)
+            }.then {
+                log += "Changing package\n"
+                configRepository.renamePackage(uiState.value.packageName)
+            }.catch { _, desc ->
+                log += desc + "\n"
+                uiState.update {
+                    it.copy(status = Status.Error("Failed to create project"))
+                }
             }
         }
 

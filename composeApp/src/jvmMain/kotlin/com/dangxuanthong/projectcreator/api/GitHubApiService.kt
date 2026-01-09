@@ -35,10 +35,11 @@ import org.koin.core.annotation.Single
 class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
     suspend fun downloadProject(
         path: Path,
-        progress: ((Float?) -> Unit)? = null
+        progress: ((Float?) -> Unit)? = null,
+        url: String
     ): Result<DownloadInfo> = runCatchNetworkExceptions {
         path.createDirectories()
-        client.prepareGet(TEMPLATE_URL) {
+        client.prepareGet(url) {
             accept(ContentType.parse("application/vnd.github+json"))
             if (progress != null) onDownload { current, total ->
                 progress.invoke(total?.let { current.toFloat() / it })
@@ -79,8 +80,8 @@ class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
         }
     }
 
-    suspend fun getShaForProject(): Result<ShaTree> = runCatchNetworkExceptions {
-        val shaTree = client.get(SHA_TREE_URL) {
+    suspend fun getShaForProject(url: String): Result<ShaTree> = runCatchNetworkExceptions {
+        val shaTree = client.get(url) {
             accept(ContentType.parse("application/vnd.github+json"))
             parameter("recursive", 1)
         }.body<ShaTree>()
@@ -96,12 +97,5 @@ class GitHubApiService(@Named("GitHub") private val client: HttpClient) {
     } catch (e: Exception) {
         if (e is CancellationException) throw e
         Result.Error(e)
-    }
-
-    companion object {
-        private const val TEMPLATE_URL =
-            "https://api.github.com/repos/dangxuanthong/projectcreator/zipball/sample-android"
-        private const val SHA_TREE_URL =
-            "https://api.github.com/repos/dangxuanthong/projectcreator/git/trees/sample-android"
     }
 }
