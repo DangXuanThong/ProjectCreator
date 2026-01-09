@@ -23,8 +23,7 @@ import org.koin.core.annotation.Factory
 import org.koin.core.annotation.InjectedParam
 
 @Factory
-class DefaultProjectConfigRepository(@InjectedParam private val root: Path) :
-    ProjectConfigRepository {
+class AndroidConfigRepository(@InjectedParam private val root: Path) : ProjectConfigRepository {
 
     override suspend fun renameProject(newName: String) = runCatchIOExceptions {
         with(root) {
