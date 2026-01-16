@@ -1,5 +1,7 @@
 package com.dangxuanthong.projectcreator.di
 
+import com.dangxuanthong.projectcreator.repository.AndroidConfigRepository
+import com.dangxuanthong.projectcreator.repository.JavaWebConfigRepository
 import com.dangxuanthong.projectcreator.repository.ProjectConfigRepository
 import io.github.cdimascio.dotenv.Dotenv
 import io.github.cdimascio.dotenv.dotenv
@@ -57,6 +59,12 @@ class AppModule : KoinComponent {
     }
 
     @Single
-    fun provideProjectConfigRepository(): (Path) -> ProjectConfigRepository =
-        { get { parametersOf(it) } }
+    @Named("android")
+    fun provideAndroidConfigRepository(): (Path) -> ProjectConfigRepository =
+        { get<AndroidConfigRepository> { parametersOf(it) } }
+
+    @Single
+    @Named("java")
+    fun provideJavaConfigRepository(): (Path) -> ProjectConfigRepository =
+        { get<JavaWebConfigRepository> { parametersOf(it) } }
 }

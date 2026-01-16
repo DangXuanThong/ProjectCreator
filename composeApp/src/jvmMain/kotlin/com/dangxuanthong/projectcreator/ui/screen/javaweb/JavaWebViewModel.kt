@@ -17,11 +17,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
+import org.koin.core.annotation.Named
 
 @KoinViewModel
 class JavaWebViewModel(
     private val downloadRepository: ProjectDownloadRepository,
-    private val getProjectConfigRepository: (Path) -> ProjectConfigRepository
+    @Named("java") private val getProjectConfigRepository: (Path) -> ProjectConfigRepository
 ) : ViewModel() {
     val uiState: StateFlow<JavaWebProjectState>
         field = MutableStateFlow(JavaWebProjectState())

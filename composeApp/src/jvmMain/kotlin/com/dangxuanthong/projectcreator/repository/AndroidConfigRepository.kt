@@ -30,7 +30,7 @@ class AndroidConfigRepository(@InjectedParam private val root: Path) : ProjectCo
             // Change project name in gradle settings file
             resolve("settings.gradle.kts").mapLine {
                 if (!it.contains("rootProject.name")) it
-                else it.replace("SampleApp", newName)
+                else it.replace("Sample App", newName)
             }
             // Change app name in strings.xml
             resolve("app/src/main/res/values/strings.xml").mapLine {

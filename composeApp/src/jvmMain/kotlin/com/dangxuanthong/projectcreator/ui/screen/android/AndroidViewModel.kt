@@ -17,11 +17,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
+import org.koin.core.annotation.Named
 
 @KoinViewModel
 class AndroidViewModel(
     private val downloadRepository: ProjectDownloadRepository,
-    private val getProjectConfigRepository: (Path) -> ProjectConfigRepository
+    @Named("android") private val getProjectConfigRepository: (Path) -> ProjectConfigRepository
 ) : ViewModel() {
     val uiState: StateFlow<AndroidProjectState>
         field = MutableStateFlow(AndroidProjectState())
