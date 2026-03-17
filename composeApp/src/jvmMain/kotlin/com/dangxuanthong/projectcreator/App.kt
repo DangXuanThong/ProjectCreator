@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import com.dangxuanthong.projectcreator.ui.screen.MultiplatformScreen
 import com.dangxuanthong.projectcreator.ui.screen.android.AndroidScreen
-import com.dangxuanthong.projectcreator.ui.screen.javaweb.JavaWebScreen
 import com.dangxuanthong.projectcreator.ui.theme.ProjectCreatorTheme
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 
@@ -42,11 +41,6 @@ fun App(settings: FileKitDialogSettings) {
                         selected = selectedTabIndex == 1,
                         onClick = { selectedTabIndex = 1 },
                         text = { Text("Multiplatform project") }
-                    )
-                    Tab(
-                        selected = selectedTabIndex == 2,
-                        onClick = { selectedTabIndex = 2 },
-                        text = { Text("Java Web project") }
                     )
                 }
             }
@@ -71,7 +65,6 @@ fun App(settings: FileKitDialogSettings) {
                 when (tab) {
                     0 -> AndroidScreen(Modifier.fillMaxSize(), fileKitSettings = settings)
                     1 -> MultiplatformScreen(Modifier.fillMaxSize())
-                    2 -> JavaWebScreen(Modifier.fillMaxSize())
                 }
             }
         }

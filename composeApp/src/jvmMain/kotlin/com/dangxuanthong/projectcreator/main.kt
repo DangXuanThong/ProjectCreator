@@ -21,7 +21,7 @@ fun main() {
             title = "Project Creator",
             icon = painterResource(Res.drawable.compose_multiplatform)
         ) {
-            val dialogSettings = FileKitDialogSettings(this.window)
+            val dialogSettings = FileKitDialogSettings(parentWindow = this.window)
             App(dialogSettings)
         }
     }
